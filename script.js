@@ -1,73 +1,88 @@
-import { useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import { fabric } from "fabric";
+const { PDFDocument, rgb } = PDFLib;
 
-pdfjs.GlobalWorkerOptions.workerSrc = 
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// DOM elements
+const pdfInput = document.getElementById('pdfInput');
+const pdfViewer = document.getElementById('pdfViewer');
+const addTextButton = document.getElementById('addText');
+const downloadButton = document.getElementById('download');
 
-export default function PDFEditor() {
-  const [file, setFile] = useState(null);
-  const [numPages, setNumPages] = useState(null);
+let pdfDoc = null;
+let pdfBytes = null;
 
-  function onFileChange(event) {
-    setFile(event.target.files[0]);
-  }
+// Event: Upload PDF
+pdfInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  function onDocumentLoadSuccess({ numPages }) {
-    setNumPages(numPages);
-  }
+    // Load PDF using PDF.js
+    const arrayBuffer = await file.arrayBuffer();
+    pdfBytes = new Uint8Array(arrayBuffer);
+    pdfDoc = await PDFDocument.load(pdfBytes);
 
-  function addText() {
-    const canvas = document.querySelector("canvas");
-    if (canvas) {
-      const fabricCanvas = new fabric.Canvas(canvas);
-      const text = new fabric.Text("Editable Text", {
-        left: 50,
-        top: 50,
-        fill: "red"
-      });
-      fabricCanvas.add(text);
-    }
-  }
-
-  return (
-    `<div class="p-4">
-      <input type="file" id="fileInput" class="mb-4" />
-      <div id="pdfContainer"></div>
-      <button class="mt-4" id="addTextButton">Add Text</button>
-      <button class="mt-4" id="saveButton">Save & Download</button>
-    </div>`
-  );
-}
-
-document.getElementById("fileInput").addEventListener("change", function(event) {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const pdfData = new Uint8Array(event.target.result);
-      pdfjs.getDocument({ data: pdfData }).promise.then(pdf => {
-        const pdfContainer = document.getElementById("pdfContainer");
-        pdfContainer.innerHTML = "";
-        for (let i = 1; i <= pdf.numPages; i++) {
-          pdf.getPage(i).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            pdfContainer.appendChild(canvas);
-            const renderContext = {
-              canvasContext: context,
-              viewport: viewport
-            };
-            page.render(renderContext);
-          });
-        }
-      });
-    };
-    reader.readAsArrayBuffer(file);
-  }
+    // Render PDF pages
+    renderPdf(pdfBytes);
 });
 
-document.getElementById("addTextButton").addEventListener("click", addText);
+// Event: Add text to PDF
+addTextButton.addEventListener('click', async () => {
+    if (!pdfDoc) return;
+
+    // Get the first page
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+
+    // Add text to the page
+    firstPage.drawText('Hello, PDF!', {
+        x: 50,
+        y: 50,
+        size: 30,
+        color: rgb(1, 0, 0), // Red color
+    });
+
+    // Re-render the PDF
+    const modifiedPdfBytes = await pdfDoc.save();
+    renderPdf(modifiedPdfBytes);
+});
+
+// Event: Download edited PDF
+downloadButton.addEventListener('click', async () => {
+    if (!pdfDoc) return;
+
+    // Save the edited PDF
+    const modifiedPdfBytes = await pdfDoc.save();
+    const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'edited-pdf.pdf';
+    link.click();
+});
+
+// Function: Render PDF pages
+async function renderPdf(pdfBytes) {
+    // Clear the viewer
+    pdfViewer.innerHTML = '';
+
+    // Load PDF using PDF.js
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+    const pdf = await loadingTask.promise;
+
+    // Render each page
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render the page on the canvas
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+        };
+        await page.render(renderContext).promise;
+
+        // Add the canvas to the viewer
+        pdfViewer.appendChild(canvas);
+    }
+}
