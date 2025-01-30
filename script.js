@@ -4,6 +4,8 @@ const { PDFDocument, rgb } = PDFLib;
 const pdfInput = document.getElementById('pdfInput');
 const pdfViewer = document.getElementById('pdfViewer');
 const addTextButton = document.getElementById('addText');
+const addImageButton = document.getElementById('addImage');
+const highlightButton = document.getElementById('highlight');
 const downloadButton = document.getElementById('download');
 
 let pdfDoc = null;
@@ -37,6 +39,55 @@ addTextButton.addEventListener('click', async () => {
         y: 50,
         size: 30,
         color: rgb(1, 0, 0), // Red color
+    });
+
+    // Re-render the PDF
+    const modifiedPdfBytes = await pdfDoc.save();
+    renderPdf(modifiedPdfBytes);
+});
+
+// Event: Add image to PDF
+addImageButton.addEventListener('click', async () => {
+    if (!pdfDoc) return;
+
+    // Load an image (e.g., from a URL or file input)
+    const imageUrl = 'https://example.com/image.png';
+    const imageBytes = await fetch(imageUrl).then((res) => res.arrayBuffer());
+    const image = await pdfDoc.embedPng(imageBytes);
+
+    // Get the first page
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+
+    // Add image to the page
+    firstPage.drawImage(image, {
+        x: 50,
+        y: 100,
+        width: 100,
+        height: 100,
+    });
+
+    // Re-render the PDF
+    const modifiedPdfBytes = await pdfDoc.save();
+    renderPdf(modifiedPdfBytes);
+});
+
+// Event: Highlight text
+highlightButton.addEventListener('click', async () => {
+    if (!pdfDoc) return;
+
+    // Get the first page
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+
+    // Highlight text
+    firstPage.drawRectangle({
+        x: 50,
+        y: 50,
+        width: 200,
+        height: 30,
+        color: rgb(1, 1, 0), // Yellow color
+        opacity: 0.5,
     });
 
     // Re-render the PDF
