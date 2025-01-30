@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import { fabric } from "fabric";
 
 pdfjs.GlobalWorkerOptions.workerSrc = 
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -16,10 +17,24 @@ export default function PDFEditor() {
     setNumPages(numPages);
   }
 
+  function addText() {
+    const canvas = document.querySelector("canvas");
+    if (canvas) {
+      const fabricCanvas = new fabric.Canvas(canvas);
+      const text = new fabric.Text("Editable Text", {
+        left: 50,
+        top: 50,
+        fill: "red"
+      });
+      fabricCanvas.add(text);
+    }
+  }
+
   return (
     `<div class="p-4">
       <input type="file" id="fileInput" class="mb-4" />
       <div id="pdfContainer"></div>
+      <button class="mt-4" id="addTextButton">Add Text</button>
       <button class="mt-4" id="saveButton">Save & Download</button>
     </div>`
   );
@@ -54,3 +69,5 @@ document.getElementById("fileInput").addEventListener("change", function(event) 
     reader.readAsArrayBuffer(file);
   }
 });
+
+document.getElementById("addTextButton").addEventListener("click", addText);
