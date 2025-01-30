@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Editor</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <input type="file" id="fileInput" class="file-input" />
-        <div id="pdfContainer" class="pdf-container"></div>
-        <button id="addTextButton" class="button">Add Text</button>
-        <button id="saveButton" class="button">Save & Download</button>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+    <h1>PDF Editor</h1>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <div id="pdfViewer"></div>
+    <button id="addText">Add Text</button>
+    <button id="download">Download Edited PDF</button>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
